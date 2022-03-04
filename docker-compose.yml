@@ -1,0 +1,20 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  web:
+    image: rblack/chatus:latest
+    environment:
+      DB_HOST: "mariadb"
+      REDIS_HOST: "redis"
+    ports:
+      - "5222:5222"
+    links:
+      - mariadb
+      - redis
+  mariadb:
+    image: mariadb:10.3
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - .:/bitnami/mariadb
+  redis:
+    image: redis:5.0.14
