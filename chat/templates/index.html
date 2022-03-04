@@ -1,0 +1,90 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"/>
+    <title>ChatUs</title>
+</head>
+<body>
+<div id="chat">
+
+</div>
+<script type="text/javascript">
+    let chat = (username) => {
+        let url = `ws://${window.location.host}/ws/socket-server/`
+        let messages = document.getElementById('messages')
+        messages.scrollTop = messages.scrollHeight;
+        document.getElementById("msg_input").focus()
+        const chatSocket = new WebSocket(url)
+        chatSocket.onmessage = function (e) {
+            let data = JSON.parse(e.data)
+            if (data.type === 'chat') {
+                messages.insertAdjacentHTML('beforeend',
+                    `<li class="message">
+                            <div class="title">${data.username}</div>
+                            <div class="text_wrapper">
+                                <div class="text">${data.message}</div>
+                            </div>
+                        </li>`
+                )
+                messages.scrollTop = messages.scrollHeight;
+
+            }
+        }
+        let form = document.getElementById('form')
+        form.addEventListener('submit', (e) => {
+            e.preventDefault()
+            let message = e.target.message.value
+            if (message) {
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'username': username
+                }))
+                form.reset()
+            }
+        })
+
+    }
+
+    (function set_username_for_chat_session() {
+        let username = prompt('Введите имя');
+        if (!username) {
+            set_username_for_chat_session()
+        } else {
+            let chat_wrapper = document.getElementById("chat")
+            let chat_body = `
+                    <div class="chat_window">
+                        <div class="top_menu">
+                            <div class="title">Pervomaysk</div>
+                        </div>
+                            <ul id="messages" class="messages">
+                            {% for message in messages%}
+                                <li class="message">
+                                {% ifchanged message.username %}
+                                    <div class="title">{{ message.username }}</div>
+                                {% endifchanged %}
+                                    <div class="text_wrapper">
+                                        <div class="text">{{  message.text  }}</div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                             </ul>
+                        <form id="form" class="bottom_wrapper clearfix">
+                            <div class="message_input_wrapper">
+                                <input id="msg_input" class="message_input" placeholder="Type your message here..." type="text" name="message"/>
+                            </div>
+                            <div class="send_message">
+                                <div class="icon"></div>
+                                <div class="text">Send</div>
+                            </div>
+                        </form>
+                    </div>`
+            chat_wrapper.insertAdjacentHTML('beforeend', chat_body)
+            chat(username)
+        }
+    }());
+</script>
+</body>
+</html>
