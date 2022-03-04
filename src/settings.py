@@ -86,12 +86,12 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",  # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        "NAME": "chat",  # Or path to database file if using sqlite3.
-        "USER": "chat",  # Not used with sqlite3.
-        "PASSWORD": "chat",  # Not used with sqlite3.
-        "HOST": "127.0.0.1",  # Set to empty string for localhost. Not
-        "PORT": "3306",  # Set to empty string for default.
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "chat",
+        "USER": "chat",
+        "PASSWORD": "chat",
+        "HOST": "127.0.0.1",
+        "PORT": "3306",
         "OPTIONS": {
             "init_command": 'SET default_storage_engine=INNODB; SET CHARACTER SET UTF8mb4; SET time_zone="+00:00";',
             "charset": "utf8mb4",
