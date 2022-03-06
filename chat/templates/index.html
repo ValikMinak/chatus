@@ -16,54 +16,136 @@
         let url = `ws://${window.location.host}/ws/socket-server/`
         let messages = document.getElementById('messages')
         messages.scrollTop = messages.scrollHeight;
-        document.getElementById("msg_input").focus()
+        let input = document.getElementById("msg_input")
+        input.focus()
         const chatSocket = new WebSocket(url)
-        chatSocket.onmessage = function (e) {
-            let data = JSON.parse(e.data)
-            if (data.type === 'chat') {
-                messages.insertAdjacentHTML('beforeend',
-                    `<li class="message">
-                            <div class="title">${data.username}</div>
-                            <div class="text_wrapper">
-                                <div class="text">${data.message}</div>
-                            </div>
-                        </li>`
-                )
-                messages.scrollTop = messages.scrollHeight;
-
-            }
-        }
         let form = document.getElementById('form')
         form.addEventListener('submit', (e) => {
             e.preventDefault()
             let message = e.target.message.value
             if (message) {
                 chatSocket.send(JSON.stringify({
+                    'type': 'chat',
                     'message': message,
+                    'username': username
+                }))
+                chatSocket.send(JSON.stringify({
+                    'type': 'empty_input',
                     'username': username
                 }))
                 form.reset()
             }
         })
 
+        chatSocket.onopen = function () {
+            chatSocket.send(JSON.stringify({
+                'type': 'update_status',
+            }))
+        }
+        input.oninput = function (e) {
+            if (e.target.value) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'enter_text',
+                    'username': username
+                }))
+            } else {
+                chatSocket.send(JSON.stringify({
+                    'type': 'empty_input',
+                    'username': username
+                }))
+            }
+
+        }
+        chatSocket.onmessage = function (e) {
+            let data = JSON.parse(e.data)
+            if (data.type === 'chat') {
+                messages.insertAdjacentHTML('beforeend',
+                    `<li class="message">
+                            <div class="title_wrapper">
+                                <div class="title">${data.username}</div>
+                                <div style="background-color: ${data.status_color}" class="online_indicator"></div>
+                            </div>
+                            <div class="text_wrapper">
+                                <div class="text">${data.message}</div>
+                            </div>
+                        </li>`
+                )
+                messages.scrollTop = messages.scrollHeight;
+                do {
+                    messages.removeChild(messages.children[0])
+                } while (messages.children.length > 150)
+
+            }
+            if (data.type === 'update_status') {
+                let title_wrappers = document.getElementsByClassName('title_wrapper')
+                for (let title_wrapper of title_wrappers) {
+                    if (data.usernames.includes(title_wrapper.children[0].textContent)) {
+                        title_wrapper.children[1].style.backgroundColor = data.status_color
+                    }
+                }
+            }
+            if (data.type === 'enter_text') {
+                let input_indicator = document.getElementById('input_indicator')
+                if (!input_indicator.textContent.includes(data.username) && username !== data.username) {
+                    input_indicator.append(data.username + ' ... ')
+                }
+            }
+            if (data.type === 'empty_input') {
+                let input_indicator = document.getElementById('input_indicator')
+                let content = input_indicator.textContent
+                if (content.includes(data.username)) {
+                    input_indicator.textContent = input_indicator.textContent.replace(data.username + ' ... ', '')
+                }
+            }
+        }
     }
 
-    (function set_username_for_chat_session() {
-        let username = prompt('Введите имя');
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            var date = new Date();
+            date.setMonth(date.getMonth() + 6); // six month
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "") + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        let nameEQ = name + "=";
+        let allCookies = document.cookie.split(';');
+        for (let i = 0; i < allCookies.length; i++) {
+            let c = allCookies[i];
+            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) == 0) {
+                return c.substring(nameEQ.length, c.length)
+            }
+        }
+        return null;
+    }
+
+    (function setUsernameForChatSession() {
+        let username = getCookie("username")
         if (!username) {
-            set_username_for_chat_session()
-        } else {
-            let chat_wrapper = document.getElementById("chat")
-            let chat_body = `
+            let username = prompt('Введите имя');
+            if (!username) {
+                setUsernameForChatSession()
+            }
+            setCookie('username', username, 1)
+        }
+        let chatWrapper = document.getElementById("chat")
+        let chatBody = `
                     <div class="chat_window">
                         <div class="top_menu">
                             <div class="title">Pervomaysk</div>
                         </div>
                             <ul id="messages" class="messages">
-                            {% for message in messages%}
+                            {% for message in messages %}
                                 <li class="message">
                                 {% ifchanged message.username %}
-                                    <div class="title">{{ message.username }}</div>
+                                    <div class="title_wrapper">
+                                        <div class="title">{{ message.username }}</div>
+                                        <div style="background-color: {{ message.status_color }}" class="online_indicator"></div>
+                                    </div>
                                 {% endifchanged %}
                                     <div class="text_wrapper">
                                         <div class="text">{{  message.text  }}</div>
@@ -72,8 +154,9 @@
                             {% endfor %}
                              </ul>
                         <form id="form" class="bottom_wrapper clearfix">
+                            <div id="input_indicator" class="input_indicator"></div>
                             <div class="message_input_wrapper">
-                                <input id="msg_input" class="message_input" placeholder="Type your message here..." type="text" name="message"/>
+                                <input autocomplete="off" id="msg_input" class="message_input" placeholder="Type your message here..." type="text" name="message"/>
                             </div>
                             <div class="send_message">
                                 <div class="icon"></div>
@@ -81,10 +164,10 @@
                             </div>
                         </form>
                     </div>`
-            chat_wrapper.insertAdjacentHTML('beforeend', chat_body)
-            chat(username)
-        }
-    }());
+        chatWrapper.insertAdjacentHTML('beforeend', chatBody)
+        chat(username)
+    })();
+
 </script>
 </body>
 </html>

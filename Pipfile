@@ -35,6 +35,7 @@ Django = "==2.2"
 pyOpenSSL = "==22.0.0"
 Twisted = "==22.2.0"
 whitenoise = "*"
+django-redis = "*"
 
 [dev-packages]
 

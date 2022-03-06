@@ -145,3 +145,19 @@ body {
     align-items: center;
     cursor: pointer;
 }
+
+.title_wrapper {
+    display: flex;
+}
+
+.online_indicator {
+    width: 5px;
+    height: 5px;
+    margin-left: 5px;
+}
+
+.input_indicator {
+    height: 20px;
+    color: #FFFFFF;
+    font-size: 14px;
+}
