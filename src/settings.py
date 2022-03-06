@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-(!3pxc!sz#bsvoa$d#57h&brgxbls7&c)ibtyo5z%$3r!!^3yw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,14 +70,14 @@ TEMPLATES = [
         },
     },
 ]
-
+REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
 WSGI_APPLICATION = 'src.wsgi.application'
 ASGI_APPLICATION = "src.asgi.application"
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [(REDIS_HOST, 6379)],
         },
     },
 }
@@ -90,7 +91,7 @@ DATABASES = {
         "NAME": "chat",
         "USER": "chat",
         "PASSWORD": "chat",
-        "HOST": "127.0.0.1",
+        "HOST": os.getenv('DB_HOST', "127.0.0.1"),
         "PORT": "3306",
         "OPTIONS": {
             "init_command": 'SET default_storage_engine=INNODB; SET CHARACTER SET UTF8mb4; SET time_zone="+00:00";',
