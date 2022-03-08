@@ -1,7 +1,7 @@
 version: "3.9"  # optional since v1.27.0
 services:
   web:
-    image: rblack/chatus:latest
+    image: ssshikari/chatus:latest
     environment:
       DB_HOST: "mariadb"
       REDIS_HOST: "redis"

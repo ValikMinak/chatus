@@ -12,6 +12,13 @@
 
 </div>
 <script type="text/javascript">
+    const LAST_MESSAGE_COUNT = 150
+    function showLastMessages(messages) {
+        do {
+            messages.removeChild(messages.children[0])
+        } while (messages.children.length > LAST_MESSAGE_COUNT)
+    }
+
     let chat = (username) => {
         let url = `ws://${window.location.host}/ws/socket-server/`
         let messages = document.getElementById('messages')
@@ -41,7 +48,7 @@
             chatSocket.send(JSON.stringify({
                 'type': 'update_status',
             }))
-        }
+         }
         input.oninput = function (e) {
             if (e.target.value) {
                 chatSocket.send(JSON.stringify({
@@ -55,7 +62,7 @@
                 }))
             }
 
-        }
+         }
         chatSocket.onmessage = function (e) {
             let data = JSON.parse(e.data)
             if (data.type === 'chat') {
@@ -71,9 +78,7 @@
                         </li>`
                 )
                 messages.scrollTop = messages.scrollHeight;
-                do {
-                    messages.removeChild(messages.children[0])
-                } while (messages.children.length > 150)
+                if (messages.children.length > LAST_MESSAGE_COUNT) showLastMessages(messages)
 
             }
             if (data.type === 'update_status') {
